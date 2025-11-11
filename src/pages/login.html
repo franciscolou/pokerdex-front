@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Entrar | Pokerdex</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+    />
+    <link rel="stylesheet" href="../styles/global.css" />
+  </head>
+
+  <body class="d-flex flex-column min-vh-100 bg-dark text-light">
+    <!-- injeta header/footer -->
+    <script type="module" src="../scripts/layout.ts"></script>
+
+    <main class="container flex-grow-1 d-flex justify-content-center align-items-center py-5">
+      <div
+        class="card bg-dark border-secondary text-light shadow-lg"
+        style="max-width: 420px; width: 100%;"
+      >
+        <div class="card-body">
+          <h1 class="h4 text-warning mb-3">🔐 Entrar</h1>
+          <p class="text-muted small mb-4">
+            Acesse sua conta para gerenciar grupos e partidas.
+          </p>
+
+          <form id="login-form" class="d-flex flex-column gap-3">
+            <div>
+              <label for="username" class="form-label">Usuário</label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                class="form-control"
+                placeholder="Seu nome de usuário"
+                required
+              />
+              <div class="invalid-feedback" id="username-error"></div>
+            </div>
+
+            <div>
+              <label for="password" class="form-label">Senha</label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                class="form-control"
+                placeholder="Sua senha"
+                required
+              />
+              <div class="invalid-feedback" id="password-error"></div>
+            </div>
+
+            <div class="form-check">
+              <input
+                type="checkbox"
+                class="form-check-input"
+                id="remember_me"
+                name="remember_me"
+              />
+              <label class="form-check-label ms-1" for="remember_me">
+                Lembrar de mim
+              </label>
+              <p class="mt-2 mb-0">
+                <a href="/src/pages/password_reset.html" class="text-warning text-decoration-none">
+                  Esqueci minha senha
+                </a>
+              </p>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-2">
+              <button type="submit" class="btn btn-sm btn-warning">Entrar</button>
+            </div>
+          </form>
+
+          <div class="text-muted small mt-3 text-center">
+            Não tem conta?
+            <a class="text-warning text-decoration-none" href="/src/pages/signup.html">
+              Cadastre-se
+            </a>.
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="bg-dark text-light text-center py-3 small border-top border-secondary">
+      &copy; 2025 Pokerdex
+    </footer>
+
+    <script type="module">
+      import { apiLogin } from "../scripts/api.ts";
+
+      const form = document.getElementById("login-form");
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value.trim();
+
+        try {
+          const token = await apiLogin(username, password);
+          localStorage.setItem("authToken", token);
+          window.location.href = "/src/pages/group_list.html";
+        } catch (err) {
+          alert("Usuário ou senha incorretos.");
+        }
+      });
+    </script>
+  </body>
+</html>
