@@ -1,187 +1,125 @@
-import { apiGet, apiDelete } from "../api";
+import { apiGet } from "../api";
 
-interface GroupRef {
-  slug: string;
-  name: string;
-}
-
-interface Game {
+interface GameDetail {
   id: number;
-  name: string;
+  title: string;
   date: string;
   location?: string;
   buy_in: number;
-  total_pot: number;
-  can_edit_game: boolean;
-  from_group?: GroupRef;
+  created_by: { username: string };
+  group: { id: number; slug: string; name: string };
+  participations?: Participation[];
 }
 
 interface Participation {
   id: number;
-  player: string;
-  player_id: number;
+  player: { username: string };
   rebuy: number;
   final_balance: number;
 }
 
-function formatCurrency(value: number): string {
-  return `R$ ${value.toFixed(2).replace(".", ",")}`;
+async function loadGameDetail() {
+  const id = new URLSearchParams(window.location.search).get("id");
+  if (!id) return alert("Partida inválida.");
+
+  try {
+    const game: GameDetail = await apiGet(`/games/${id}/`);
+
+    renderBackLink(game);
+    renderGameCard(game);
+    renderParticipations(game);
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao carregar partida.");
+  }
 }
 
-function getParam(key: string): string | null {
-  return new URLSearchParams(window.location.search).get(key);
+function renderBackLink(game: GameDetail) {
+  const el = document.getElementById("back-link-area")!;
+  el.innerHTML = `
+    <a href="/src/pages/group_detail.html?slug=${game.group.slug}"
+       class="btn btn-outline-light btn-sm">
+      <i class="bi bi-chevron-left"></i> Voltar ao grupo
+    </a>`;
 }
 
-async function renderGameDetail() {
-  const gameId = getParam("id");
-  if (!gameId) {
-    document.body.innerHTML = "<p>Erro: ID da partida não informado.</p>";
-    return;
-  }
+function renderGameCard(game: GameDetail) {
+  const el = document.getElementById("game-card")!;
+  el.innerHTML = `
+    <div class="card bg-dark border-secondary text-light">
+      <div class="card-body d-flex flex-column flex-md-row align-items-start gap-3">
 
-  const game: Game = await apiGet(`/games/${gameId}/`);
-  const participations: Participation[] = await apiGet(`/games/${gameId}/participations/`);
-
-  const backLink = document.getElementById("back-link-area")!;
-  const gameCard = document.getElementById("game-card")!;
-  const partContainer = document.getElementById("participations-container")!;
-
-  // 🔙 link de retorno
-  if (game.from_group) {
-    backLink.innerHTML = `
-      <a href="/src/pages/group_detail.html?slug=${game.from_group.slug}"
-         class="back-link-ghost">
-        <i class="bi bi-chevron-left"></i> Voltar ao grupo
-      </a>`;
-  }
-
-  const gameDate = new Date(game.date).toLocaleDateString("pt-BR");
-
-  // 🪪 informações do jogo
-  gameCard.innerHTML = `
-    <div class="card bg-dark border-secondary text-light mb-3">
-      <div class="card-body d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
         <div class="flex-grow-1">
-          <h1 class="h4 text-warning mb-2">${game.name}</h1>
+          <h1 class="h4 text-warning mb-2">${game.title || "Partida"}</h1>
 
-          <div class="d-flex flex-wrap gap-2">
-            <span class="chip chip-neutral" title="Data">📅 ${gameDate}</span>
-            ${
-              game.location
-                ? `<span class="chip chip-neutral" title="Local">📍 ${game.location}</span>`
-                : ""
-            }
-            <span class="chip chip-gold" title="Buy-in">💰 ${formatCurrency(game.buy_in)}</span>
-            <span class="chip chip-green" title="Total da noite">💵 ${formatCurrency(
-              game.total_pot
-            )}</span>
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <span class="chip chip-neutral">📅 ${new Date(game.date).toLocaleDateString("pt-BR")}</span>
+            ${game.location ? `<span class="chip chip-neutral">📍 ${game.location}</span>` : ""}
+            <span class="chip chip-gold">💰 Buy-in: R$${game.buy_in}</span>
+            <span class="chip chip-neutral">👤 Criado por: ${game.created_by.username}</span>
           </div>
         </div>
 
-        ${
-          game.can_edit_game
-            ? `
-          <a class="btn btn-sm btn-glass btn-glass-gold btn-icon-gap d-md-label"
-             href="/src/pages/game_edit.html?id=${game.id}">
-             <i class="bi bi-pencil-fill"></i>Editar</a>
-          <button class="btn btn-sm btn-glass btn-glass-danger btn-icon-gap d-md-label"
-                  id="delete-game-btn">
-             <i class="bi bi-trash3-fill"></i>Excluir</button>
-        `
-            : ""
-        }
-
-        ${
-          participations.length
-            ? `
-          <div class="ms-md-auto d-flex gap-2">
-            <a href="/src/pages/participation_add.html?game=${game.id}"
-               class="btn btn-sm btn-glass btn-glass-green btn-icon-gap d-md-label">
-              <i class="bi bi-person-fill-add"></i>
-              Adicionar participante
-            </a>
-          </div>
-        `
-            : ""
-        }
       </div>
     </div>
   `;
+}
 
-  // 🗑️ botão de deletar partida
-  const delBtn = document.getElementById("delete-game-btn");
-  if (delBtn) {
-    delBtn.addEventListener("click", async () => {
-      if (confirm("Tem certeza que deseja excluir esta partida?")) {
-        await apiDelete(`/games/${gameId}/`);
-        window.location.href = "/src/pages/group_list.html";
-      }
-    });
-  }
+function renderParticipations(game: GameDetail) {
+  const el = document.getElementById("participations-container")!;
 
-  // 📋 participações
-  if (!participations.length) {
-    partContainer.innerHTML = `
+  const parts = game.participations ?? [];
+
+  if (!parts.length) {
+    el.innerHTML = `
       <div class="text-center my-4">
-        <p class="mb-3">Nenhuma participação ainda.</p>
-        <a href="/src/pages/participation_add.html?game=${game.id}" class="btn btn-warning">
-          + Adicionar participação
+        <p class="mb-3">Nenhuma participação registrada.</p>
+        <a href="/src/pages/participation_add.html?game=${game.id}" 
+          class="btn btn-warning">
+          + Adicionar participantes
         </a>
-      </div>`;
+      </div>
+    `;
     return;
   }
 
-  partContainer.innerHTML = `
+  el.innerHTML = `
     <div class="card bg-dark border-secondary text-light">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
-          <h2 class="h5 m-0">Participações</h2>
-          <span class="badge bg-secondary">${participations.length}</span>
+          <h3 class="h5 m-0">Participações</h3>
+          <span class="badge bg-secondary">${parts.length}</span>
         </div>
+
         <ul class="list-group list-group-flush">
-          ${participations.map((p) => renderParticipation(game, p)).join("")}
+          ${parts.map(renderParticipation).join("")}
         </ul>
       </div>
     </div>
   `;
 }
 
-function renderParticipation(game: Game, p: Participation): string {
-  const invested = game.buy_in + p.rebuy;
-  const cls =
-    p.final_balance > invested
-      ? "amount-win"
-      : p.final_balance < invested
-      ? "amount-loss"
-      : "amount-even";
+
+function renderParticipation(p: Participation) {
+  const totalInvested = Number(p.rebuy);
+  const balance = Number(p.final_balance);
+
+  const color =
+    balance > totalInvested ? "amount-win" :
+    balance < totalInvested ? "amount-loss" :
+    "amount-even";
 
   return `
-    <li class="list-group-item text-light d-flex justify-content-between align-items-center">
-      <div class="d-flex align-items-center gap-2">
-        <span class="player-pill">${p.player}</span>
+    <li class="list-group-item d-flex justify-content-between align-items-center text-light">
+      <div>
+        <strong>${p.player.username}</strong>
+        <small class="text-muted d-block">R$ ${balance} (rebuy: ${p.rebuy || 0})</small>
       </div>
 
-      <div class="text-end">
-        <div class="d-flex align-items-center gap-2 justify-content-end">
-          <div class="amount ${cls}">
-            ${formatCurrency(p.final_balance)}
-          </div>
-
-          <span class="chip chip-neutral" title="Rebuy">
-            ↻ ${formatCurrency(p.rebuy || 0)}
-          </span>
-
-          <a class="btn btn-xs btn-promote"
-             href="/src/pages/participation_edit.html?game=${game.id}&part=${p.id}">
-            <i class="bi bi-pencil-fill"></i>
-          </a>
-          <button class="btn btn-xs btn-remove" data-id="${p.id}">
-            <i class="bi bi-trash3-fill"></i>
-          </button>
-        </div>
-      </div>
+      <div class="${color}">R$ ${balance}</div>
     </li>
   `;
 }
 
-renderGameDetail();
+loadGameDetail();

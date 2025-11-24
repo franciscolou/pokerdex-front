@@ -1,20 +1,52 @@
+import { checkAuth } from "../api";
+
 export async function loadLayout() {
-  const headerHTML = await fetch("/src/components/header.html").then((r) => r.text());
-  const footerHTML = await fetch("/src/components/footer.html").then((r) => r.text());
+  console.log("🔄 layout.ts carregando...");
 
-  document.body.insertAdjacentHTML("afterbegin", headerHTML);
-  document.body.insertAdjacentHTML("beforeend", footerHTML);
+  try {
+    const res = await fetch("/src/components/header.html");
+    if (!res.ok) {
+      console.error("❌ Header não encontrado!");
+      return;
+    }
+    const headerHTML = await res.text();
+    document.body.insertAdjacentHTML("afterbegin", headerHTML);
+    console.log("✔ Header inserido no DOM");
+  } catch (err) {
+    console.error("⚠ Erro ao carregar header:", err);
+    return;
+  }
+
+  const isLogged = await checkAuth();
+  console.log("🔍 Usuário logado?", isLogged);
+
+  if (!isLogged) {
+    window.location.href = "/src/pages/login.html";
+    return;
+  }
+
+  const userPlaceholder = document.getElementById("username-placeholder");
+  if (userPlaceholder) {
+    try {
+      const res = await fetch("http://localhost:8000/api/auth/me/", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      });
+      if (res.ok) {
+        const user = await res.json();
+        userPlaceholder.textContent = `Olá, ${user.username}!`;
+        console.log("✔ Saudação aplicada");
+      }
+    } catch {}
+  }
+
+  const logoutBtn = document.getElementById("logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("access_token");
+      window.location.href = "/src/pages/login.html";
+    });
+    console.log("✔ Logout funcionando");
+  }
 }
-
-export function handleSearch(event: Event) {
-  event.preventDefault();
-  const q = (document.getElementById("search") as HTMLInputElement).value.trim();
-  if (q) window.location.href = `/src/pages/group_list.html?q=${encodeURIComponent(q)}`;
-}
-
-export function logout() {
-  localStorage.removeItem("authToken");
-  window.location.href = "/src/pages/login.html";
-}
-
-window.addEventListener("DOMContentLoaded", loadLayout);

@@ -5,12 +5,13 @@
     "lib": ["DOM", "ES2020"],
     "strict": true,
     "moduleResolution": "Bundler",
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
   },
   "include": ["src"]
 }

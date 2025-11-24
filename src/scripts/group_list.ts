@@ -30,8 +30,8 @@ async function renderGroups() {
   try {
     const data = await apiGet("/groups/");
 
-    const myGroups: Group[] = data.my_groups || [];
-    const otherGroups: Group[] = data.other_groups || [];
+    const myGroups: Group[] = data.myGroups || [];
+    const otherGroups: Group[] = data.otherGroups || [];
 
     myGroupsCount.textContent = myGroups.length.toString();
     otherGroupsCount.textContent = otherGroups.length.toString();

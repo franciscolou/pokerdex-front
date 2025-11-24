@@ -1,110 +1,84 @@
+// src/scripts/participation_add.ts
 import { apiGet, apiPost } from "../api";
 
-interface Game {
+interface GameDetail {
   id: number;
-  name: string;
+  title: string;
+  group: { slug: string };
 }
 
-interface Player {
-  id: number;
-  username: string;
+interface Membership {
+  user: { id: number; username: string };
 }
 
-function getParam(key: string): string | null {
-  return new URLSearchParams(window.location.search).get(key);
-}
-
-async function renderParticipationForm() {
-  const gameId = getParam("game");
-  const form = document.getElementById("participation-form") as HTMLFormElement;
-  const gameLabel = document.getElementById("game-label")!;
-  const errorContainer = document.getElementById("error-container")!;
+async function loadForm() {
+  const params = new URLSearchParams(window.location.search);
+  const gameId = params.get("game");
 
   if (!gameId) {
-    gameLabel.innerHTML = `<span class="text-danger">Erro: ID da partida não informado.</span>`;
+    alert("Partida inválida.");
     return;
   }
 
   try {
-    const game: Game = await apiGet(`/games/${gameId}/`);
-    const players: Player[] = await apiGet(`/players/`); // endpoint que lista usuários disponíveis
+    const game: GameDetail = await apiGet(`/games/${gameId}/`);
 
-    gameLabel.innerHTML = `Partida: <strong>${game.name}</strong>`;
+    const groupData = await apiGet(`/groups/${game.group.slug}/`);
 
-    form.innerHTML = `
-      <div>
-        <label for="player" class="form-label">Jogador</label>
-        <select id="player" name="player" class="form-control" required>
-          <option value="">Selecione o jogador</option>
-          ${players.map((p) => `<option value="${p.id}">${p.username}</option>`).join("")}
-        </select>
-      </div>
+    const select = document.getElementById("player") as HTMLSelectElement;
 
-      <div>
-        <label for="rebuy" class="form-label">Rebuy</label>
-        <input
-          type="number"
-          step="0.01"
-          min="0"
-          id="rebuy"
-          name="rebuy"
-          placeholder="Ex: 0.00"
-          class="form-control"
-        />
-        <div class="form-text text-muted">Valor adicional pago (se aplicável)</div>
-      </div>
-
-      <div>
-        <label for="final_balance" class="form-label">Saldo final</label>
-        <input
-          type="number"
-          step="0.01"
-          id="final_balance"
-          name="final_balance"
-          placeholder="Ex: 120.00"
-          class="form-control"
-          required
-        />
-      </div>
-
-      <div class="d-flex justify-content-end gap-2 mt-2">
-        <a href="/src/pages/game_detail.html?id=${game.id}" class="btn btn-sm btn-outline-light">Cancelar</a>
-        <button type="submit" class="btn btn-sm btn-warning">Salvar</button>
-      </div>
+    select.innerHTML = `
+      <option disabled selected>Selecione um jogador...</option>
+      ${groupData.memberships
+        .map((m: Membership) => 
+          `<option value="${m.user.id}">${m.user.username}</option>`
+        )
+        .join("")}
     `;
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      errorContainer.innerHTML = "";
+    const titleEl = document.getElementById("game-title");
+    if (titleEl) {
+      titleEl.textContent = game.title;
+    }
 
-      const data = {
-        player_id: Number((document.getElementById("player") as HTMLSelectElement).value),
-        rebuy: Number((document.getElementById("rebuy") as HTMLInputElement).value || 0),
-        final_balance: Number(
-          (document.getElementById("final_balance") as HTMLInputElement).value
-        ),
-      };
-
-      if (!data.player_id || isNaN(data.final_balance)) {
-        errorContainer.innerHTML = `<div class="alert alert-danger py-2 mb-3">Preencha todos os campos obrigatórios.</div>`;
-        return;
-      }
-
-      try {
-        await apiPost(`/games/${gameId}/participations/`, data);
-        alert("Participação adicionada com sucesso!");
-        window.location.href = `/src/pages/game_detail.html?id=${gameId}`;
-      } catch (err) {
-        console.error(err);
-        errorContainer.innerHTML = `<div class="alert alert-danger py-2 mb-3">
-          Ocorreu um erro ao adicionar a participação.
-        </div>`;
-      }
-    });
   } catch (err) {
     console.error(err);
-    gameLabel.innerHTML = `<span class="text-danger">Erro ao carregar dados da partida.</span>`;
+    alert("Erro ao carregar dados do jogo.");
   }
 }
 
-renderParticipationForm();
+async function handleSubmit(e: Event) {
+  e.preventDefault();
+
+  const params = new URLSearchParams(window.location.search);
+  const gameId = params.get("game");
+
+  if (!gameId) {
+    alert("Partida inválida.");
+    return;
+  }
+
+  const form = e.target as HTMLFormElement;
+  const data = new FormData(form);
+
+  const payload = {
+    player_id: Number(data.get("player")),
+    rebuy: Number(data.get("rebuy")) || 0,
+    final_balance: Number(data.get("final_balance")) || 0,
+  };
+
+
+  try {
+    await apiPost(`/games/${gameId}/add_participation/`, payload);
+
+    window.location.href = `/src/pages/game_detail.html?id=${gameId}`;
+
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao salvar participação.");
+  }
+}
+
+document.getElementById("participation-form")?.addEventListener("submit", handleSubmit);
+
+loadForm();
