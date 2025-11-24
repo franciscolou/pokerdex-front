@@ -1,5 +1,6 @@
-import { getGroups } from "./api.ts";
+import { apiGet } from "./api.ts";
 import { loadLayout } from "./scripts/layout.ts";
+import { checkAuth } from "./api";
 
 interface Group {
   id: number;
@@ -12,9 +13,6 @@ interface Group {
   last_post?: string;
 }
 
-/**
- * Renderiza os cards de grupos na página principal.
- */
 function renderGroups(groups: Group[], container: HTMLElement, title: string) {
   if (groups.length === 0) {
     container.innerHTML = `
@@ -72,19 +70,22 @@ function renderGroups(groups: Group[], container: HTMLElement, title: string) {
   `;
 }
 
-/**
- * Função principal da página inicial (lista de grupos).
- */
 async function main() {
-  await loadLayout(); // injeta header e footer automaticamente
+
+  const isAuthenticated = await checkAuth();
+  if (!isAuthenticated) {
+    window.location.href = "/src/pages/login.html";
+    return;
+  }
+  await loadLayout();
 
   const app = document.getElementById("app");
   if (!app) return;
 
-  app.innerHTML = `<p class="text-muted">Carregando grupos...</p>`;
+  app.innerHTML = `<p class="text-gray">Carregando grupos...</p>`;
 
   try {
-    const { myGroups, otherGroups } = await getGroups();
+    const { myGroups, otherGroups } = await apiGet("/groups");
 
     app.innerHTML = `
       <section class="my-groups-section mb-5">
