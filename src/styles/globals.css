@@ -87,7 +87,7 @@ main.container{
 footer{ background:var(--panel); border-top:2px solid var(--border); color:#888; }
 
 .group-hero .group-description{ color:var(--muted-2); }
-.card .small.text-muted{ color:var(--muted) !important; }
+.card .small.text-gray{ color:var(--muted) !important; }
 
 .text-gray { color:var(--muted); }
 .chip{
@@ -221,7 +221,7 @@ form .form-control:focus{
   box-shadow: 0 0 0 .15rem var(--gold-soft);
 }
 
-.list-group-item .small.text-muted{
+.list-group-item .small.text-gray{
   color: var(--muted) !important;
 }
 
@@ -791,4 +791,21 @@ input.text-light::placeholder {
   color: #c2c2c2;
   font-size: .875rem;
   margin-top: 5px;
+}
+
+/* Estiliza o valor selecionado e quando o select está em foco */
+.form-select,
+.form-select:focus,
+select.form-control,
+select.form-control:focus {
+  background-color: var(--textarea) !important;  /* Fundo escuro */
+  color: #f8f9fa !important;             /* Texto claro */
+  border-color: #444 !important;         /* Borda discreta */
+}
+
+/* Estiliza globalmente todas as <option> */
+.form-select option,
+select.form-control option {
+  background-color: var(--panel);  /* fundo escuro */
+  color: #f8f9fa;             /* texto claro */
 }
