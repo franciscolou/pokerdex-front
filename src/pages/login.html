@@ -11,11 +11,10 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
     />
-    <link rel="stylesheet" href="../styles/global.css" />
+    <link rel="stylesheet" href="../styles/globals.css" />
   </head>
 
   <body class="d-flex flex-column min-vh-100 bg-dark text-light">
-    <!-- injeta header/footer -->
     <script type="module" src="../scripts/layout.ts"></script>
 
     <main class="container flex-grow-1 d-flex justify-content-center align-items-center py-5">
@@ -25,7 +24,7 @@
       >
         <div class="card-body">
           <h1 class="h4 text-warning mb-3">🔐 Entrar</h1>
-          <p class="text-muted small mb-4">
+          <p class="text-gray small mb-4">
             Acesse sua conta para gerenciar grupos e partidas.
           </p>
 
@@ -78,7 +77,7 @@
             </div>
           </form>
 
-          <div class="text-muted small mt-3 text-center">
+          <div class="text-gray small mt-3 text-center">
             Não tem conta?
             <a class="text-warning text-decoration-none" href="/src/pages/signup.html">
               Cadastre-se
@@ -93,9 +92,10 @@
     </footer>
 
     <script type="module">
-      import { apiLogin } from "../scripts/api.ts";
+      import { apiPost } from "../api.ts";
 
       const form = document.getElementById("login-form");
+
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
@@ -103,13 +103,20 @@
         const password = document.getElementById("password").value.trim();
 
         try {
-          const token = await apiLogin(username, password);
-          localStorage.setItem("authToken", token);
+          // 1️⃣ Faz login via DRF
+          const data = await apiPost("/auth/login/", { username, password });
+
+          // 2️⃣ Salva o token no padrão oficial da API.ts
+          localStorage.setItem("access_token", data.access);
+
+          // 3️⃣ Redireciona para página protegida
           window.location.href = "/src/pages/group_list.html";
         } catch (err) {
-          alert("Usuário ou senha incorretos.");
+          alert("Usuário ou senha inválidos");
+          console.error(err);
         }
       });
     </script>
+
   </body>
 </html>
