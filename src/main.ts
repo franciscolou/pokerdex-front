@@ -19,7 +19,7 @@ function renderGroups(groups: Group[], container: HTMLElement, title: string) {
       <div class="text-center py-5">
         <h3 class="h5 mb-2">Ops! Nenhum grupo encontrado.</h3>
         <p class="text-gray mb-3">Crie ou participe de um grupo para começar.</p>
-        <a href="/src/pages/group_create.html" class="btn btn-create-group">
+        <a href="/src/pages/group_manage.html" class="btn btn-create-group">
           <i class="bi bi-people-fill"></i> Criar novo grupo
         </a>
       </div>

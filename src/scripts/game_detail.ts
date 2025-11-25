@@ -2,6 +2,7 @@ import { apiGet } from "../api";
 
 interface GameDetail {
   id: number;
+  description: string;
   title: string;
   date: string;
   location?: string;
@@ -24,10 +25,13 @@ async function loadGameDetail() {
 
   try {
     const game: GameDetail = await apiGet(`/games/${id}/`);
-
+    console.log("GAME:", game);
     renderBackLink(game);
     renderGameCard(game);
-    renderParticipations(game);
+    if (game.participations && game.participations.length > 0) {
+      console.log("Type[participations][0]:", typeof game.participations[0]);
+      renderParticipations(game);
+    }
 
   } catch (err) {
     console.error(err);
@@ -52,6 +56,7 @@ function renderGameCard(game: GameDetail) {
 
         <div class="flex-grow-1">
           <h1 class="h4 text-warning mb-2">${game.title || "Partida"}</h1>
+          <p class="text-gray mb-2">${game.description || ""}</p>
 
           <div class="d-flex flex-wrap gap-2 mb-3">
             <span class="chip chip-neutral">📅 ${new Date(game.date).toLocaleDateString("pt-BR")}</span>
@@ -102,24 +107,34 @@ function renderParticipations(game: GameDetail) {
 
 
 function renderParticipation(p: Participation) {
-  const totalInvested = Number(p.rebuy);
-  const balance = Number(p.final_balance);
+  const rebuyValue = Number(p.rebuy) || 0;
+  const balance = Number(p.final_balance) || 0;
 
   const color =
-    balance > totalInvested ? "amount-win" :
-    balance < totalInvested ? "amount-loss" :
+    balance > 0 ? "amount-win" :
+    balance < 0 ? "amount-loss" :
     "amount-even";
+
+  const rebuyChip = rebuyValue > 0
+    ? `<span class="chip chip-neutral ms-2">
+         <i class="bi bi-arrow-repeat"></i> R$ ${rebuyValue.toFixed(2)}
+       </span>`
+    : "";
 
   return `
     <li class="list-group-item d-flex justify-content-between align-items-center text-light">
       <div>
         <strong>${p.player.username}</strong>
-        <small class="text-muted d-block">R$ ${balance} (rebuy: ${p.rebuy || 0})</small>
       </div>
 
-      <div class="${color}">R$ ${balance}</div>
+      <div class="d-flex align-items-center">
+        <div class="${color}">R$ ${balance.toFixed(2)}</div>
+        ${rebuyChip}
+      </div>
     </li>
   `;
 }
+
+
 
 loadGameDetail();

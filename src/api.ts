@@ -44,7 +44,8 @@ async function apiRequest(
   }
 
   if (!res.ok) {
-    throw new Error(`Erro ${res.status}: ${await res.text()}`);
+    const errorMessage = await parseError(res);
+    throw new Error(errorMessage);
   }
 
   return res.json();
@@ -52,10 +53,62 @@ async function apiRequest(
 
 export const apiGet = (path: string) => apiRequest("GET", path);
 
-export const apiPost = (path: string, body: any) =>
-  apiRequest("POST", path, body);
+export async function apiPost(url: string, body: any) {
+  return requestWithBody("POST", url, body);
+}
 
-export const apiPut = (path: string, body: any) =>
-  apiRequest("PUT", path, body);
+export async function apiPut(url: string, body: any) {
+  return requestWithBody("PUT", url, body);
+}
 
 export const apiDelete = (path: string) => apiRequest("DELETE", path);
+
+
+async function requestWithBody(method: "POST" | "PUT", url: string, body: any) {
+  const token = localStorage.getItem("access_token");
+
+  const res = await fetch(`http://localhost:8000/api${url}`, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const errorText = await parseError(res);
+    throw new Error(errorText);
+  }
+
+  return await res.json();
+}
+
+async function parseError(res: Response): Promise<string> {
+  try {
+    const text = await res.text();
+    if (!text) return res.statusText || `HTTP ${res.status}`;
+
+    // If body is JSON, try to extract common message fields, otherwise return raw JSON/string
+    try {
+      const data = JSON.parse(text);
+
+      if (typeof data === "string") return data;
+      if (data && typeof data.detail === "string") return data.detail;
+
+      const keys = Object.keys(data);
+      if (keys.length) {
+        const first = data[keys[0]];
+        if (Array.isArray(first)) return `${keys[0]}: ${first.join(", ")}`;
+        if (typeof first === "string") return `${keys[0]}: ${first}`;
+      }
+
+      return JSON.stringify(data);
+    } catch {
+      // Not JSON — return raw text
+      return text;
+    }
+  } catch {
+    return res.statusText || `HTTP ${res.status}`;
+  }
+}

@@ -809,3 +809,14 @@ select.form-control option {
   background-color: var(--panel);  /* fundo escuro */
   color: #f8f9fa;             /* texto claro */
 }
+
+.chip-neutral {
+  background-color: #444;      /* discreto */
+  color: #ddd;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
