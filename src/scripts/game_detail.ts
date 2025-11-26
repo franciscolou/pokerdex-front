@@ -10,6 +10,8 @@ interface GameDetail {
   created_by: { username: string };
   group: { id: number; slug: string; name: string };
   participations?: Participation[];
+  is_game_creator: boolean;
+  is_group_creator: boolean;
 }
 
 interface Participation {
@@ -28,11 +30,7 @@ async function loadGameDetail() {
     console.log("GAME:", game);
     renderBackLink(game);
     renderGameCard(game);
-    if (game.participations && game.participations.length > 0) {
-      console.log("Type[participations][0]:", typeof game.participations[0]);
-      renderParticipations(game);
-    }
-
+    renderParticipations(game);
   } catch (err) {
     console.error(err);
     alert("Erro ao carregar partida.");
@@ -50,6 +48,8 @@ function renderBackLink(game: GameDetail) {
 
 function renderGameCard(game: GameDetail) {
   const el = document.getElementById("game-card")!;
+  const isCreator = game.is_game_creator === true || game.is_group_creator === true; // <- condição
+
   el.innerHTML = `
     <div class="card bg-dark border-secondary text-light">
       <div class="card-body d-flex flex-column flex-md-row align-items-start gap-3">
@@ -66,23 +66,32 @@ function renderGameCard(game: GameDetail) {
           </div>
         </div>
 
+        ${isCreator ? `
+          <div>
+            <a href="/src/pages/game_manage.html?id=${game.id}"
+               class="btn btn-outline-warning btn-sm">
+              <i class="bi bi-pencil-square"></i> Editar partida
+            </a>
+          </div>
+        ` : ""}
       </div>
     </div>
   `;
 }
 
+
 function renderParticipations(game: GameDetail) {
   const el = document.getElementById("participations-container")!;
-
   const parts = game.participations ?? [];
+  console.log("parts", parts);
 
   if (!parts.length) {
     el.innerHTML = `
-      <div class="text-center my-4">
-        <p class="mb-3">Nenhuma participação registrada.</p>
+      <div class="text-center mt-4">
+        <p class="text-gray mb-3">Essa partida ainda não tem participações.</p>
         <a href="/src/pages/participation_add.html?game=${game.id}" 
-          class="btn btn-warning">
-          + Adicionar participantes
+          class="btn btn-warning btn-sm">
+          <i class="bi bi-person-plus"></i> Adicionar participação
         </a>
       </div>
     `;
@@ -104,6 +113,7 @@ function renderParticipations(game: GameDetail) {
     </div>
   `;
 }
+
 
 
 function renderParticipation(p: Participation) {

@@ -61,10 +61,14 @@ export async function apiPut(url: string, body: any) {
   return requestWithBody("PUT", url, body);
 }
 
+export async function apiPatch(url: string, body: any) {
+  return requestWithBody("PATCH", url, body);
+}
+
 export const apiDelete = (path: string) => apiRequest("DELETE", path);
 
 
-async function requestWithBody(method: "POST" | "PUT", url: string, body: any) {
+async function requestWithBody(method: "POST" | "PUT" | "PATCH", url: string, body: any) {
   const token = localStorage.getItem("access_token");
 
   const res = await fetch(`http://localhost:8000/api${url}`, {

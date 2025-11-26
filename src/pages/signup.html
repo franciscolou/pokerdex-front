@@ -74,13 +74,17 @@
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
+        // Limpa mensagem de erro anterior
+        const oldError = document.getElementById("form-error");
+        if (oldError) oldError.remove();
+
         const username = document.getElementById("username").value.trim();
         const email = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value.trim();
         const password2 = document.getElementById("password2").value.trim();
 
         if (password !== password2) {
-          alert("As senhas não coincidem.");
+          showError("As senhas não coincidem.");
           return;
         }
 
@@ -98,10 +102,19 @@
             window.location.href = "/src/pages/login.html";
           }
         } catch (err) {
-          alert("Erro ao criar conta. Verifique os dados.");
           console.error(err);
+          showError(err?.message || "Erro ao criar conta.");
         }
       });
+
+      function showError(message) {
+        const errorBox = document.createElement("div");
+        errorBox.id = "form-error";
+        errorBox.className = "alert alert-danger mt-3";
+        errorBox.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i>${message}`;
+        form.insertAdjacentElement("beforebegin", errorBox);
+      }
     </script>
+
   </body>
 </html>

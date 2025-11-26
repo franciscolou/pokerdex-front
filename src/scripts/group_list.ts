@@ -5,7 +5,7 @@ interface Group {
   slug: string;
   name: string;
   description?: string;
-  created_by__username: string;
+  created_by: { username: string};
   member_count: number;
   post_count: number;
   last_post?: string | null;
@@ -48,7 +48,7 @@ async function renderGroups() {
 
   // Botões do topo
   headerActions.innerHTML = `
-    <a href="/src/pages/game_create.html" class="btn btn-create-game">
+    <a href="/src/pages/game_manage.html" class="btn btn-create-game">
       <i class="bi bi-cash-stack"></i> Nova noite
     </a>
     <a href="/src/pages/group_manage.html" class="btn btn-create-group">
@@ -124,7 +124,7 @@ function renderGroupCard(g: Group): string {
         minute: "2-digit"
       })
     : null;
-
+  console.log(g);
   return `
     <div class="col-md-4 col-sm-6">
       <a href="/src/pages/group_detail.html?slug=${g.slug}"
@@ -134,7 +134,7 @@ function renderGroupCard(g: Group): string {
           <h5 class="card-title mb-1 text-warning">${g.name}</h5>
 
           <p class="card-subtitle mb-2 small text-gray">
-            criado por ${g.created_by__username}
+            criado por ${g.created_by.username}
             <span class="meta-dot"></span>
             ${g.member_count} membro${g.member_count !== 1 ? "s" : ""}
           </p>

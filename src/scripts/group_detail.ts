@@ -1,7 +1,7 @@
 import { apiGet, apiPost } from "../api";
 
 interface Membership {
-  user: { username: string };
+  user: { id: number, username: string };
   role: "ADMIN" | "MEMBER";
   joined_at: string;
 }
@@ -73,8 +73,11 @@ async function loadGroupDetail() {
 
   if (group.is_admin || group.is_creator) {
     renderJoinRequests(group);
+    attachRequestActions(group.slug); // <-- também só deve existir pra admin/criador
   }
+
   renderGames(group);
+
 }
 
 /* ============================================================
@@ -183,38 +186,130 @@ function attachJoinButton(group: GroupDetail) {
 function renderMembers(group: GroupDetail) {
   const container = document.getElementById("members-container")!;
 
+  // log each membership role
+  group.memberships.forEach((m) => console.log(m.role));
   container.innerHTML = `
     <div class="card bg-dark border-secondary text-light">
       <div class="card-body">
         <h3 class="h5 mb-3">Membros (${group.memberships.length})</h3>
         <ul class="list-group list-group-flush">
           ${group.memberships
-            .map(
-              (m) => `
-            <li class="list-group-item d-flex justify-content-between text-light">
-              <span>${m.user.username}</span>
-              <span class="badge bg-${m.role === "ADMIN" ? "warning" : "secondary"}">
-                ${m.role.toLowerCase()}
-              </span>
-            </li>
-          `
-            )
+            .map((m) => `
+              <li class="list-group-item d-flex justify-content-between align-items-center text-light">
+
+                <div>
+                  <span>${m.user.username}</span>
+                  <span class="badge bg-${m.role === "ADMIN" ? "warning" : "secondary"} ms-2">
+                    ${m.role.toLowerCase()}
+                  </span>
+                </div>
+
+            ${
+              // MOSTRAR BOTÕES SOMENTE SE:
+              // 1) Usuário logado é admin ou criador
+              // 2) O membro NÃO é o criador do grupo  ❗
+              (group.is_admin || group.is_creator) && m.user.username !== group.created_by.username
+                ? `
+                <div class="d-flex gap-2">
+                  ${
+                    m.role === "ADMIN"
+                      ? `<button class="btn btn-sm btn-outline-warning" data-demote="${m.user.username}">Rebaixar</button>`
+                      : `<button class="btn btn-sm btn-outline-success" data-promote="${m.user.username}">Promover</button>`
+                  }
+                  <button class="btn btn-sm btn-outline-danger" data-remove="${m.user.username}">Remover</button>
+                </div>
+              `
+                : ""   // <= criador fica só com badge
+            }
+              </li>
+            `)
             .join("")}
         </ul>
       </div>
     </div>
   `;
+
+  // Aqui adicionamos os eventos
+  attachMemberActions(group.slug, group);
 }
+
+function attachMemberActions(groupSlug: string, group: GroupDetail) {
+  // PROMOTE
+  document.querySelectorAll("[data-promote]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const username = btn.getAttribute("data-promote");
+      const member = findMemberIdByUsername(username!, group);
+      console.log("Username:", username);
+      console.log("Member!", member);
+      if (!member) return;
+
+      try {
+        await apiPost(`/groups/${groupSlug}/promote/${member}/`, {});
+        location.reload();
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao promover usuário.");
+      }
+    });
+  });
+
+  // DEMOTE
+  document.querySelectorAll("[data-demote]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const username = btn.getAttribute("data-demote");
+      const member = findMemberIdByUsername(username!, group);
+      if (!member) return;
+
+      try {
+        await apiPost(`/groups/${groupSlug}/demote/${member}/`, {});
+        location.reload();
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao rebaixar usuário.");
+      }
+    });
+  });
+
+  // REMOVE
+  document.querySelectorAll("[data-remove]").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const username = btn.getAttribute("data-remove");
+      const member = findMemberIdByUsername(username!, group);
+      if (!member) return;
+
+      if (!confirm(`Tem certeza que deseja remover ${username} do grupo?`)) return;
+
+      try {
+        await apiPost(`/groups/${groupSlug}/remove/${member}/`, {});
+        alert(`Usuário removido!`);
+        location.reload();
+      } catch (err) {
+        console.error(err);
+        alert("Erro ao remover usuário.");
+      }
+    });
+  });
+}
+
+// 🧠 conseguimos buscar o ID pela lista de membros já carregada!
+function findMemberIdByUsername(username: string, group: GroupDetail): number | null {
+  const member = group.memberships.find((m) => m.user.username === username);
+  return member ? member.user.id : null;
+}
+
+
+
 
 /* ============================================================
    SOLICITAÇÕES DE ENTRADA (SOMENTE ADMIN/CRIADOR)
 ============================================================ */
 function renderJoinRequests(group: GroupDetail) {
+  console.log("group: ", group);
   const requests = group.join_requests || [];
-  const container = document.getElementById("members-container")!;
+  const container = document.getElementById("container")!;
 
   const wrapper = document.createElement("div");
-  wrapper.className = "mt-4";
+  wrapper.className = "mt-4"; // <-- REMOVIDO justify-content-center
 
   wrapper.innerHTML = `
     <h3 class="h6 text-warning mb-2">Solicitações Pendentes</h3>
@@ -252,17 +347,17 @@ function renderJoinRequests(group: GroupDetail) {
     }
   `;
 
-  container.insertAdjacentElement("afterend", wrapper);
-
-  attachRequestActions(group.slug);
+  container.appendChild(wrapper);
 }
+
+
 
 function attachRequestActions(groupSlug: string) {
   document.querySelectorAll("[data-approve]").forEach((btn) => {
     btn.addEventListener("click", async () => {
       const id = btn.getAttribute("data-approve");
       try {
-        await apiPost(`/grouprequests/${id}/accept/`, {});
+        await apiPost(`/group-requests/${id}/accept/`, {});
         alert("Usuário aprovado!");
         location.reload();
       } catch (err) {
@@ -276,7 +371,7 @@ function attachRequestActions(groupSlug: string) {
     btn.addEventListener("click", async () => {
       const id = btn.getAttribute("data-reject");
       try {
-        await fetch(`http://localhost:8000/api/grouprequests/${id}/`, {
+        await fetch(`http://localhost:8000/api/group-requests/${id}/`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` }
         });
@@ -301,7 +396,7 @@ function renderGames(group: GroupDetail) {
       <div class="card bg-dark border-secondary text-light">
         <div class="card-body text-center py-4">
           <p class="mb-3">Nenhuma partida registrada.</p>
-          <a href="/src/pages/game_create.html" class="btn btn-warning">
+          <a href="/src/pages/game_manage.html" class="btn btn-warning">
             + Criar primeira partida
           </a>
         </div>

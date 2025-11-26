@@ -21,7 +21,7 @@ export default defineConfig({
       input: {
         group_list: resolve(rootDir, "src/pages/group_list.html"),
         group_detail: resolve(rootDir, "src/pages/group_detail.html"),
-        game_create: resolve(rootDir, "src/pages/game_create.html"),
+        game_manage: resolve(rootDir, "src/pages/game_manage.html"),
         game_detail: resolve(rootDir, "src/pages/game_detail.html"),
         participation_add: resolve(rootDir, "src/pages/participation_add.html"),
         login: resolve(rootDir, "src/pages/login.html"),
