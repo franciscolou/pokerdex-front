@@ -42,7 +42,6 @@ async function loadGroups() {
 
   const pendingGroupsContainer = document.getElementById("pending-groups-container")!;
   const pendingGroupsCount = document.getElementById("pending-groups-count")!;
-
   headerActions.innerHTML = `
     <a href="/src/pages/group_manage.html" class="btn btn-create-group">
       <i class="bi bi-people-fill"></i> Novo grupo
@@ -62,7 +61,6 @@ async function loadGroups() {
     const myGroups: Group[] = data.myGroups || [];
     const otherGroups: Group[] = data.otherGroups || [];
     const pendingGroups: Group[] = data.requestedGroups || [];
-
     myGroupsCount.textContent = String(myGroups.length);
     otherGroupsCount.textContent = String(otherGroups.length);
     pendingGroupsCount.textContent = String(pendingGroups.length);
