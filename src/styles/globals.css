@@ -366,7 +366,7 @@ form .form-control:focus{
   font-size: 1.1rem;
 }
 
-.btn-groups {
+.navbar .btn.btn-groups {
   background: linear-gradient(135deg, #2a2a2a 0%, #1c1c1c 100%);
   color: var(--muted-2);
   font-weight: 600;
@@ -379,11 +379,11 @@ form .form-control:focus{
   transition: transform .12s ease, box-shadow .2s ease, background .2s ease, color .2s ease;
 }
 
-.btn-groups:hover {
+.navbar .btn-groups:hover {
   transform: translateY(-1px);
   background: linear-gradient(135deg, #333 0%, #1e1e1e 100%);
   color: #fff;
-  border-color: var(--gold);
+  border-color: var(--muted-2);
   box-shadow: 0 0 0 .15rem var(--gold-soft);
   text-decoration: none;
 }
@@ -820,4 +820,8 @@ select.form-control option {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+
+.row{
+  background: transparent !important;
 }

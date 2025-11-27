@@ -21,6 +21,7 @@ async function apiRequest(
   path: string,
   body?: any
 ): Promise<any> {
+
   const token = getAuthToken();
 
   const headers: HeadersInit = {
@@ -47,7 +48,6 @@ async function apiRequest(
     const errorMessage = await parseError(res);
     throw new Error(errorMessage);
   }
-  console.log("API Response:", res);
   return res.json();
 }
 
@@ -69,7 +69,6 @@ export const apiDelete = (path: string) => apiRequest("DELETE", path);
 
 
 async function requestWithBody(method: "POST" | "PUT" | "PATCH", url: string, body: any) {
-  console.log("localStorage:", localStorage);
   const token = localStorage.getItem("access_token");
 
   const res = await fetch(`${API_BASE}${url}`, {
@@ -80,7 +79,6 @@ async function requestWithBody(method: "POST" | "PUT" | "PATCH", url: string, bo
     },
     body: JSON.stringify(body),
   });
-  console.log("Response:", res);
   if (!res.ok) {
     const errorText = await parseError(res);
     throw new Error(errorText);

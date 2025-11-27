@@ -121,7 +121,7 @@ function renderHeader(group: GroupDetail) {
               ? `
               <a href="/src/pages/group_manage.html?slug=${group.slug}"
                 class="btn btn-warning btn-sm">
-                ✏️ Editar
+                <i class="bi bi-pencil-square"></i>
               </a>
             `
               : ""
@@ -193,7 +193,6 @@ function attachJoinButton(group: GroupDetail) {
       await apiPost(`/groups/${group.slug}/join_request/`, {});
       location.reload();
     } catch (err) {
-      console.log(err);
       alert("Erro ao enviar solicitação.");
     }
   });
@@ -209,25 +208,21 @@ function renderMembers(group: GroupDetail) {
         <ul class="list-group list-group-flush">
           ${group.memberships
             .map((m) => {
-              let badgeText = "";
-              let badgeColor = "";
+              let badge = "";
 
               if (m.user.username === group.created_by.username) {
-                badgeText = "dono";
-                badgeColor = "warning";
+                badge = "<i class='bi bi-award text-warning' title='Criador'></i>";
               } else if (m.role === "ADMIN") {
-                badgeText = "admin";
-                badgeColor = "info";
+                badge = "<i class='bi bi-shield-shaded text-info' title='Administrador'></i>";
               } else {
-                badgeText = m.role.toLowerCase();
-                badgeColor = "secondary";
+                badge = "<i class='bi bi-person text-secondary' title='Membro'></i>";
               }
 
               return `
                 <li class="list-group-item d-flex justify-content-between align-items-center text-light">
                   <div>
                     <span>${m.user.username}</span>
-                    <span class="badge bg-${badgeColor} ms-2">${badgeText}</span>
+                    ${badge}
                   </div>
 
                   ${
@@ -239,14 +234,14 @@ function renderMembers(group: GroupDetail) {
                               <div class="d-flex gap-2">
                                 ${
                                   m.role === "ADMIN"
-                                    ? `<button class="btn btn-sm btn-outline-warning" data-demote="${m.user.username}">Rebaixar</button>`
-                                    : `<button class="btn btn-sm btn-outline-success" data-promote="${m.user.username}">Promover</button>`
+                                    ? `<button class="btn btn-sm btn-outline-warning" data-demote="${m.user.username}"><i class="bi bi-person-fill-down"></i></button>`
+                                    : `<button class="btn btn-sm btn-outline-success" data-promote="${m.user.username}"><i class="bi bi-person-fill-up"></i></button>`
                                 }
-                                <button class="btn btn-sm btn-outline-danger" data-remove="${m.user.username}">Remover</button>
+                                <button class="btn btn-sm btn-outline-danger" data-remove="${m.user.username}"><i class="bi bi-person-x-fill"></i></button>
                               </div>
                             `
                             : group.is_admin && m.role === "MEMBER"
-                              ? `<div><button class="btn btn-sm btn-outline-danger" data-remove="${m.user.username}">Remover</button></div>`
+                              ? `<div><button class="btn btn-sm btn-outline-danger" data-remove="${m.user.username}"><i class="bi bi-person-x-fill"></i></button></div>`
                               : ""
                         )
                   }
@@ -269,8 +264,6 @@ function attachMemberActions(groupSlug: string, group: GroupDetail) {
     btn.addEventListener("click", async () => {
       const username = btn.getAttribute("data-promote");
       const member = findMemberIdByUsername(username!, group);
-      console.log("Username:", username);
-      console.log("Member!", member);
       if (!member) return;
 
       try {
@@ -328,13 +321,10 @@ function findMemberIdByUsername(username: string, group: GroupDetail): number | 
 
 
 function renderJoinRequests(group: GroupDetail) {
-  console.log("Renderizando solicitações de entrada...");
   const requests = group.join_requests || [];
   const container = document.getElementById("requests-container")!;
-
   const wrapper = document.createElement("div");
   wrapper.className = "mt-4";
-
   wrapper.innerHTML = `
     <h3 class="h6 text-warning mb-2">Solicitações Pendentes</h3>
 
@@ -356,10 +346,10 @@ function renderJoinRequests(group: GroupDetail) {
 
               <div class="d-flex gap-2">
                 <button class="btn btn-success btn-sm" data-approve="${r.id}">
-                  ✔ Aprovar
+                  <i class="bi bi-check-lg"></i>
                 </button>
                 <button class="btn btn-danger btn-sm" data-reject="${r.id}">
-                  ✖ Rejeitar
+                  <i class="bi bi-x-lg"></i>
                 </button>
               </div>
             </li>
@@ -370,7 +360,6 @@ function renderJoinRequests(group: GroupDetail) {
       `
     }
   `;
-  console.log("Chegou ate aqui");
   container.innerHTML = "";
   container.appendChild(wrapper);
 }
@@ -411,10 +400,10 @@ function renderGames(group: GroupDetail) {
 
   if (!group.recent_games.length) {
     container.innerHTML = `
-      <div class="card bg-dark border-secondary text-light">
+      <div class="bg-dark border-secondary text-light">
         <div class="card-body text-center py-4">
           <p class="mb-3">Nenhuma partida registrada.</p>
-          <a href="/src/pages/game_manage.html" class="btn btn-warning">
+          <a href="/src/pages/game_manage.html" class="btn btn-create-game me-2">
             + Criar primeira partida
           </a>
         </div>

@@ -5,13 +5,13 @@ interface Group {
   slug: string;
   name: string;
   description?: string;
-  created_by: { username: string};
+  created_by: { username: string };
   member_count: number;
   post_count: number;
   last_post?: string | null;
 }
 
-async function renderGroups() {
+async function loadGroups() {
   const headerActions = document.getElementById("header-actions")!;
   const myGroupsContainer = document.getElementById("my-groups-container")!;
   const otherGroupsContainer = document.getElementById("other-groups-container")!;
@@ -35,7 +35,6 @@ async function renderGroups() {
     `;
 
     const myGroupsSection = document.querySelector(".my-groups-section")!;
-    const otherGroupsSection = document.querySelector("section.mb-2")!;
     myGroupsSection.insertAdjacentElement("afterend", wrapper);
 
     pendingSection = wrapper;
@@ -45,16 +44,20 @@ async function renderGroups() {
   const pendingGroupsCount = document.getElementById("pending-groups-count")!;
 
   headerActions.innerHTML = `
-    <a href="/src/pages/game_manage.html" class="btn btn-create-game">
-      <i class="bi bi-cash-stack"></i> Nova noite
-    </a>
     <a href="/src/pages/group_manage.html" class="btn btn-create-group">
       <i class="bi bi-people-fill"></i> Novo grupo
     </a>
   `;
+  const params = new URLSearchParams(window.location.search);
+  const searchTerm = params.get("search") || "";
+
+  let url = "/groups/";
+  if (searchTerm) {
+    url += `?search=${encodeURIComponent(searchTerm)}`;
+  }
 
   try {
-    const data = await apiGet("/groups/");
+    const data = await apiGet(url);
 
     const myGroups: Group[] = data.myGroups || [];
     const otherGroups: Group[] = data.otherGroups || [];
@@ -75,7 +78,7 @@ async function renderGroups() {
               <i class="bi bi-people-fill"></i> Criar novo grupo
             </a>
           </div>
-      `;
+        `;
 
     if (pendingGroups.length > 0) {
       pendingSection!.style.display = "block";
@@ -88,14 +91,15 @@ async function renderGroups() {
       otherGroups.length > 0
         ? otherGroups.map(renderGroupCard).join("")
         : `<div class="text-center py-4 text-gray">Nenhum outro grupo encontrado.</div>`;
+
   } catch (err) {
+    console.error(err);
     myGroupsContainer.innerHTML = `
       <div class="alert alert-danger">
         Erro ao carregar grupos: ${(err as Error).message}
       </div>`;
   }
 }
-
 
 function renderGroupCard(g: Group): string {
   const date = g.last_post
@@ -104,10 +108,10 @@ function renderGroupCard(g: Group): string {
         month: "short",
         year: "numeric",
         hour: "2-digit",
-        minute: "2-digit"
+        minute: "2-digit",
       })
     : null;
-  console.log(g);
+
   return `
     <div class="col-md-4 col-sm-6">
       <a href="/src/pages/group_detail.html?slug=${g.slug}"
@@ -137,4 +141,5 @@ function renderGroupCard(g: Group): string {
   `;
 }
 
-renderGroups();
+
+loadGroups();

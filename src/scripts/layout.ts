@@ -1,7 +1,6 @@
 import { checkAuth } from "../api";
 
 export async function loadLayout() {
-  console.log("🔄 layout.ts carregando...");
 
   try {
     const res = await fetch("/src/components/header.html");
@@ -11,14 +10,11 @@ export async function loadLayout() {
     }
     const headerHTML = await res.text();
     document.body.insertAdjacentHTML("afterbegin", headerHTML);
-    console.log("✔ Header inserido no DOM");
   } catch (err) {
-    console.error("⚠ Erro ao carregar header:", err);
     return;
   }
 
   const isLogged = await checkAuth();
-  console.log("🔍 Usuário logado?", isLogged);
 
   if (!isLogged) {
     window.location.href = "/src/pages/login.html";
@@ -36,7 +32,6 @@ export async function loadLayout() {
       if (res.ok) {
         const user = await res.json();
         userPlaceholder.textContent = `Olá, ${user.username}!`;
-        console.log("✔ Saudação aplicada");
       }
     } catch {}
   }
@@ -47,6 +42,45 @@ export async function loadLayout() {
       localStorage.removeItem("access_token");
       window.location.href = "/src/pages/login.html";
     });
-    console.log("✔ Logout funcionando");
   }
+
+  setupHeaderSearch();
+}
+
+function setupGroupSearch() {
+  const form = document.getElementById("search-form") as HTMLFormElement;
+  const input = document.getElementById("search") as HTMLInputElement;
+
+  if (!form || !input) return;
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const query = input.value.trim();
+    if (!query) return;
+
+    location.href = `/src/pages/group_list.html?search=${encodeURIComponent(query)}`;
+  });
+}
+
+setupGroupSearch();
+
+function setupHeaderSearch() {
+  const form = document.getElementById("search-form");
+  const input = document.getElementById("search");
+
+  if (!form || !input) {
+    console.warn("[HEADER SEARCH] elementos não encontrados");
+    return;
+  }
+
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const term = input.value.trim();
+    const encoded = encodeURIComponent(term);
+
+    window.location.href = `/src/pages/group_list.html?search=${encoded}`;
+  });
 }

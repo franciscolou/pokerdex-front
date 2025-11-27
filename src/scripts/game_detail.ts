@@ -27,7 +27,6 @@ async function loadGameDetail() {
 
   try {
     const game: GameDetail = await apiGet(`/games/${id}/`);
-    console.log("GAME:", game);
     renderBackLink(game);
     renderGameCard(game);
     renderParticipations(game);
@@ -93,7 +92,6 @@ function renderGameCard(game: GameDetail) {
 function renderParticipations(game: GameDetail) {
   const el = document.getElementById("participations-container")!;
   const parts = game.participations ?? [];
-  console.log("parts", parts);
 
   if (!parts.length) {
     el.innerHTML = `
