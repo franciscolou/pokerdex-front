@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from "../api";
+import { apiDelete, apiGet, apiPost } from "../api";
 
 interface Membership {
   user: { id: number, username: string };
@@ -35,7 +35,7 @@ interface GroupDetail {
   is_creator: boolean;
   recent_games: Game[];
   recent_posts: Post[];
-  already_requested: boolean; // <- importante
+  already_requested: boolean;
   join_requests: JoinRequest[];
 }
 
@@ -45,9 +45,6 @@ interface JoinRequest {
   created_at: string;
 }
 
-/* ============================================================
-   LOAD
-============================================================ */
 async function loadGroupDetail() {
   const slug = new URLSearchParams(window.location.search).get("slug");
   if (!slug) return alert("Grupo inválido");
@@ -63,7 +60,6 @@ async function loadGroupDetail() {
 
   renderHeader(group);
 
-  // Se não é membro → só mostra aviso e acabou
   if (!group.is_member) {
     renderNonMemberNotice(group);
     return;
@@ -73,29 +69,40 @@ async function loadGroupDetail() {
 
   if (group.is_admin || group.is_creator) {
     renderJoinRequests(group);
-    attachRequestActions(group.slug); // <-- também só deve existir pra admin/criador
+    attachRequestActions(group.slug);
   }
 
   renderGames(group);
 
 }
 
-/* ============================================================
-   HEADER DO GRUPO
-============================================================ */
+
 function renderHeader(group: GroupDetail) {
-  document.getElementById("back-link-area")!.innerHTML = `
+  const backLink = `
     <a href="/src/pages/group_list.html" class="btn btn-outline-light btn-sm">
       <i class="bi bi-chevron-left"></i> Voltar
     </a>
   `;
 
+  const leaveBtn = group.is_member
+    ? `
+      <button id="leave-btn" class="btn btn-outline-danger btn-sm">
+        Sair do grupo
+      </button>
+    `
+    : "";
+
+  document.getElementById("back-link-area")!.innerHTML = `
+    <div class="d-flex justify-content-between align-items-center w-100">
+      <div>${backLink}</div>
+      <div>${leaveBtn}</div>
+    </div>
+  `;
+
   document.getElementById("group-card")!.innerHTML = `
     <div class="card bg-dark border-secondary text-light mb-3">
       <div class="card-body">
-
         <div class="d-flex justify-content-between align-items-start">
-
           <div class="flex-grow-1 me-3">
             <h1 class="h4 text-warning mb-2">${group.name}</h1>
             <p class="text-gray mb-2">${group.description || "Sem descrição"}</p>
@@ -109,30 +116,48 @@ function renderHeader(group: GroupDetail) {
             </div>
           </div>
 
-          ${group.is_creator ? `
-            <a href="/src/pages/group_manage.html?slug=${group.slug}"
-              class="btn btn-warning btn-sm">
-              ✏️ Editar
-            </a>
-          ` : ""}
+          ${
+            group.is_creator
+              ? `
+              <a href="/src/pages/group_manage.html?slug=${group.slug}"
+                class="btn btn-warning btn-sm">
+                ✏️ Editar
+              </a>
+            `
+              : ""
+          }
         </div>
-
       </div>
     </div>
   `;
+
+  attachLeaveButton(group);
 }
 
-/* ============================================================
-   AVISO PARA NÃO-MEMBROS
-============================================================ */
+function attachLeaveButton(group: GroupDetail) {
+  const btn = document.getElementById("leave-btn");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    if (!confirm("Tem certeza que deseja sair do grupo?")) return;
+
+    try {
+      await apiPost(`/groups/${group.slug}/leave/`, {});
+      location.href = "/src/pages/group_list.html";
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao sair do grupo.");
+    }
+  });
+}
+
+
 function renderNonMemberNotice(group: GroupDetail) {
-  // limpa containers que não devem ser exibidos
   document.getElementById("members-container")!.innerHTML = "";
   document.getElementById("games-container")!.innerHTML = "";
 
   const notice = document.createElement("div");
 
-  // bloco grande, centralizado e com espaço do card
   notice.className = "text-center mt-4 mb-2";
 
   if (group.already_requested) {
@@ -153,17 +178,12 @@ function renderNonMemberNotice(group: GroupDetail) {
     `;
   }
 
-  // insere abaixo do card, agora com distância maior
   document.getElementById("group-card")!.insertAdjacentElement("afterend", notice);
 
   attachJoinButton(group);
 }
 
 
-
-/* ============================================================
-   BOTÃO PEDIR ENTRADA
-============================================================ */
 function attachJoinButton(group: GroupDetail) {
   const btn = document.getElementById("join-btn");
   if (!btn) return;
@@ -171,7 +191,6 @@ function attachJoinButton(group: GroupDetail) {
   btn.addEventListener("click", async () => {
     try {
       await apiPost(`/groups/${group.slug}/join_request/`, {});
-      alert("Solicitação enviada!");
       location.reload();
     } catch (err) {
       console.log(err);
@@ -180,58 +199,69 @@ function attachJoinButton(group: GroupDetail) {
   });
 }
 
-/* ============================================================
-   LISTA DE MEMBROS
-============================================================ */
 function renderMembers(group: GroupDetail) {
   const container = document.getElementById("members-container")!;
 
-  // log each membership role
-  group.memberships.forEach((m) => console.log(m.role));
   container.innerHTML = `
     <div class="card bg-dark border-secondary text-light">
       <div class="card-body">
         <h3 class="h5 mb-3">Membros (${group.memberships.length})</h3>
         <ul class="list-group list-group-flush">
           ${group.memberships
-            .map((m) => `
-              <li class="list-group-item d-flex justify-content-between align-items-center text-light">
+            .map((m) => {
+              let badgeText = "";
+              let badgeColor = "";
 
-                <div>
-                  <span>${m.user.username}</span>
-                  <span class="badge bg-${m.role === "ADMIN" ? "warning" : "secondary"} ms-2">
-                    ${m.role.toLowerCase()}
-                  </span>
-                </div>
+              if (m.user.username === group.created_by.username) {
+                badgeText = "dono";
+                badgeColor = "warning";
+              } else if (m.role === "ADMIN") {
+                badgeText = "admin";
+                badgeColor = "info";
+              } else {
+                badgeText = m.role.toLowerCase();
+                badgeColor = "secondary";
+              }
 
-            ${
-              // MOSTRAR BOTÕES SOMENTE SE:
-              // 1) Usuário logado é admin ou criador
-              // 2) O membro NÃO é o criador do grupo  ❗
-              (group.is_admin || group.is_creator) && m.user.username !== group.created_by.username
-                ? `
-                <div class="d-flex gap-2">
+              return `
+                <li class="list-group-item d-flex justify-content-between align-items-center text-light">
+                  <div>
+                    <span>${m.user.username}</span>
+                    <span class="badge bg-${badgeColor} ms-2">${badgeText}</span>
+                  </div>
+
                   ${
-                    m.role === "ADMIN"
-                      ? `<button class="btn btn-sm btn-outline-warning" data-demote="${m.user.username}">Rebaixar</button>`
-                      : `<button class="btn btn-sm btn-outline-success" data-promote="${m.user.username}">Promover</button>`
+                    m.user.username === group.created_by.username
+                      ? "" 
+                      : (
+                          group.is_creator
+                            ? `
+                              <div class="d-flex gap-2">
+                                ${
+                                  m.role === "ADMIN"
+                                    ? `<button class="btn btn-sm btn-outline-warning" data-demote="${m.user.username}">Rebaixar</button>`
+                                    : `<button class="btn btn-sm btn-outline-success" data-promote="${m.user.username}">Promover</button>`
+                                }
+                                <button class="btn btn-sm btn-outline-danger" data-remove="${m.user.username}">Remover</button>
+                              </div>
+                            `
+                            : group.is_admin && m.role === "MEMBER"
+                              ? `<div><button class="btn btn-sm btn-outline-danger" data-remove="${m.user.username}">Remover</button></div>`
+                              : ""
+                        )
                   }
-                  <button class="btn btn-sm btn-outline-danger" data-remove="${m.user.username}">Remover</button>
-                </div>
-              `
-                : ""   // <= criador fica só com badge
-            }
-              </li>
-            `)
+                </li>
+              `;
+            })
             .join("")}
         </ul>
       </div>
     </div>
   `;
 
-  // Aqui adicionamos os eventos
   attachMemberActions(group.slug, group);
 }
+
 
 function attachMemberActions(groupSlug: string, group: GroupDetail) {
   // PROMOTE
@@ -291,25 +321,19 @@ function attachMemberActions(groupSlug: string, group: GroupDetail) {
   });
 }
 
-// 🧠 conseguimos buscar o ID pela lista de membros já carregada!
 function findMemberIdByUsername(username: string, group: GroupDetail): number | null {
   const member = group.memberships.find((m) => m.user.username === username);
   return member ? member.user.id : null;
 }
 
 
-
-
-/* ============================================================
-   SOLICITAÇÕES DE ENTRADA (SOMENTE ADMIN/CRIADOR)
-============================================================ */
 function renderJoinRequests(group: GroupDetail) {
-  console.log("group: ", group);
+  console.log("Renderizando solicitações de entrada...");
   const requests = group.join_requests || [];
-  const container = document.getElementById("container")!;
+  const container = document.getElementById("requests-container")!;
 
   const wrapper = document.createElement("div");
-  wrapper.className = "mt-4"; // <-- REMOVIDO justify-content-center
+  wrapper.className = "mt-4";
 
   wrapper.innerHTML = `
     <h3 class="h6 text-warning mb-2">Solicitações Pendentes</h3>
@@ -346,7 +370,8 @@ function renderJoinRequests(group: GroupDetail) {
       `
     }
   `;
-
+  console.log("Chegou ate aqui");
+  container.innerHTML = "";
   container.appendChild(wrapper);
 }
 
@@ -358,7 +383,6 @@ function attachRequestActions(groupSlug: string) {
       const id = btn.getAttribute("data-approve");
       try {
         await apiPost(`/group-requests/${id}/accept/`, {});
-        alert("Usuário aprovado!");
         location.reload();
       } catch (err) {
         console.error(err);
@@ -371,11 +395,7 @@ function attachRequestActions(groupSlug: string) {
     btn.addEventListener("click", async () => {
       const id = btn.getAttribute("data-reject");
       try {
-        await fetch(`http://localhost:8000/api/group-requests/${id}/`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${localStorage.getItem("access_token")}` }
-        });
-        alert("Solicitação rejeitada.");
+        await apiDelete(`/group-requests/${id}/`);
         location.reload();
       } catch (err) {
         console.error(err);
@@ -385,9 +405,7 @@ function attachRequestActions(groupSlug: string) {
   });
 }
 
-/* ============================================================
-   LISTA DE PARTIDAS
-============================================================ */
+
 function renderGames(group: GroupDetail) {
   const container = document.getElementById("games-container")!;
 
@@ -421,6 +439,7 @@ function renderGames(group: GroupDetail) {
   attachGameClickEvents();
 }
 
+
 function renderGameItem(g: Game) {
   const d = new Date(g.date);
   const formatted = `${d.getDate()} ${d.toLocaleString("pt-BR", {
@@ -447,6 +466,7 @@ function renderGameItem(g: Game) {
   `;
 }
 
+
 function attachGameClickEvents() {
   document.querySelectorAll(".game-item").forEach((item) => {
     item.addEventListener("click", () => {
@@ -456,7 +476,5 @@ function attachGameClickEvents() {
   });
 }
 
-/* ============================================================
-   START
-============================================================ */
+
 loadGroupDetail();

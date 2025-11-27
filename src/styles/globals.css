@@ -7,8 +7,10 @@
   --muted: #9b9b9b;
   --muted-2:#cccccc;
   --gold: #d4af37;
+  --total: #03e229;
   --gold-soft: rgba(212,175,55,.3);
   --gold-bg: rgba(212,175,55,.12);
+  --total-bg: rgba(1, 93, 23, 0.118);
   --green-bg: rgba(55, 212, 63, 0.12);
   --danger: #c0392b;
   --danger-2:#e74c3c;
@@ -97,6 +99,7 @@ footer{ background:var(--panel); border-top:2px solid var(--border); color:#888;
 }
 .chip-neutral{ background:#1f1f1f; border-color:var(--border); color:#d9d9d9; }
 .chip-gold{ background:var(--gold-bg); border-color:var(--gold); color:#f5e6a8; }
+.chip-total{ background:var(--total-bg); border-color:var(--total); color:#72cb7b; }
 .chip-green { background: var(--green-bg); border-color: #28a745; color: #a4fcb1; }
 
 .player-pill{ background:#2a2a2a; border:1px solid #3a3a3a; padding:.2rem .5rem; border-radius:999px; font-size:.9rem; }
@@ -793,25 +796,23 @@ input.text-light::placeholder {
   margin-top: 5px;
 }
 
-/* Estiliza o valor selecionado e quando o select está em foco */
 .form-select,
 .form-select:focus,
 select.form-control,
 select.form-control:focus {
-  background-color: var(--textarea) !important;  /* Fundo escuro */
-  color: #f8f9fa !important;             /* Texto claro */
-  border-color: #444 !important;         /* Borda discreta */
+  background-color: var(--textarea) !important;
+  color: #f8f9fa !important;
+  border-color: #444 !important;
 }
 
-/* Estiliza globalmente todas as <option> */
 .form-select option,
 select.form-control option {
-  background-color: var(--panel);  /* fundo escuro */
-  color: #f8f9fa;             /* texto claro */
+  background-color: var(--panel);
+  color: #f8f9fa;
 }
 
 .chip-neutral {
-  background-color: #444;      /* discreto */
+  background-color: #444;
   color: #ddd;
   border-radius: 12px;
   padding: 2px 8px;

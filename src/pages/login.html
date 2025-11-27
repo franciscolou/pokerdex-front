@@ -103,13 +103,9 @@
         const password = document.getElementById("password").value.trim();
 
         try {
-          // 1️⃣ Faz login via DRF
           const data = await apiPost("/auth/login/", { username, password });
-
-          // 2️⃣ Salva o token no padrão oficial da API.ts
           localStorage.setItem("access_token", data.access);
 
-          // 3️⃣ Redireciona para página protegida
           window.location.href = "/src/pages/group_list.html";
         } catch (err) {
           alert("Usuário ou senha inválidos");

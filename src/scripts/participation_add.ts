@@ -1,4 +1,3 @@
-// src/scripts/participation_add.ts
 import { apiGet, apiPost } from "../api";
 
 interface GameDetail {

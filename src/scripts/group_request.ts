@@ -77,18 +77,6 @@ async function renderJoinRequest() {
            ← Voltar à lista de grupos
         </a>
       `;
-
-      const btn = document.getElementById("request-btn")!;
-      btn.addEventListener("click", async () => {
-        try {
-          await apiPost(`/groups/${slug}/join-request/`, {});
-          alert("Solicitação enviada com sucesso!");
-          window.location.href = `/src/pages/group_list.html`;
-        } catch (err) {
-          alert("Erro ao enviar solicitação. Tente novamente.");
-          console.error(err);
-        }
-      });
     }
   } catch (err) {
     container.innerHTML = `<div class="text-danger">Erro ao carregar informações do grupo.</div>`;

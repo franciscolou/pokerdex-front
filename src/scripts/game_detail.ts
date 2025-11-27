@@ -48,7 +48,11 @@ function renderBackLink(game: GameDetail) {
 
 function renderGameCard(game: GameDetail) {
   const el = document.getElementById("game-card")!;
-  const isCreator = game.is_game_creator === true || game.is_group_creator === true; // <- condição
+  const isCreator = game.is_game_creator === true || game.is_group_creator === true;
+
+  const parts = game.participations ?? [];
+  const totalRebuys = parts.reduce((sum, p) => sum + (Number(p.rebuy) || 0), 0);
+  const totalPot = (parts.length * game.buy_in) + totalRebuys;
 
   el.innerHTML = `
     <div class="card bg-dark border-secondary text-light">
@@ -59,10 +63,15 @@ function renderGameCard(game: GameDetail) {
           <p class="text-gray mb-2">${game.description || ""}</p>
 
           <div class="d-flex flex-wrap gap-2 mb-3">
-            <span class="chip chip-neutral">📅 ${new Date(game.date).toLocaleDateString("pt-BR")}</span>
-            ${game.location ? `<span class="chip chip-neutral">📍 ${game.location}</span>` : ""}
-            <span class="chip chip-gold">💰 Buy-in: R$${game.buy_in}</span>
             <span class="chip chip-neutral">👤 Criado por: ${game.created_by.username}</span>
+          
+            <span class="chip chip-neutral">📅 ${new Date(game.date).toLocaleDateString("pt-BR")}</span>
+          
+            ${game.location ? `<span class="chip chip-neutral">📍 ${game.location}</span>` : ""}
+          
+            <span class="chip chip-total">💵 R$${game.buy_in}</span>
+            
+            <span class="chip chip-gold">💰 R$${totalPot.toFixed(2)}</span>
           </div>
         </div>
 
@@ -78,6 +87,7 @@ function renderGameCard(game: GameDetail) {
     </div>
   `;
 }
+
 
 
 function renderParticipations(game: GameDetail) {
@@ -107,7 +117,8 @@ function renderParticipations(game: GameDetail) {
         </div>
 
         <ul class="list-group list-group-flush">
-          ${parts.map(renderParticipation).join("")}
+          ${parts.map(p => renderParticipation(p, game.buy_in)).join("")
+}
         </ul>
       </div>
     </div>
@@ -116,13 +127,16 @@ function renderParticipations(game: GameDetail) {
 
 
 
-function renderParticipation(p: Participation) {
+function renderParticipation(p: Participation, buyIn: number) {
   const rebuyValue = Number(p.rebuy) || 0;
-  const balance = Number(p.final_balance) || 0;
+  const finalBalance = Number(p.final_balance) || 0;
+
+  const totalInvested = buyIn + rebuyValue;
+  const profit = finalBalance - totalInvested;
 
   const color =
-    balance > 0 ? "amount-win" :
-    balance < 0 ? "amount-loss" :
+    profit > 0 ? "amount-win" :
+    profit < 0 ? "amount-loss" :
     "amount-even";
 
   const rebuyChip = rebuyValue > 0
@@ -137,13 +151,16 @@ function renderParticipation(p: Participation) {
         <strong>${p.player.username}</strong>
       </div>
 
-      <div class="d-flex align-items-center">
-        <div class="${color}">R$ ${balance.toFixed(2)}</div>
-        ${rebuyChip}
+      <div class="d-flex align-items-center justify-content-between gap-2">
+      ${rebuyChip}
+        <div class="${color}">
+          R$ ${finalBalance.toFixed(2)}
+        </div>
       </div>
     </li>
   `;
 }
+
 
 
 

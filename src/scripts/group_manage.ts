@@ -1,5 +1,4 @@
-// src/scripts/group_create.ts
-import { apiGet, apiPost, apiPut } from "../api";
+import { apiGet, apiPost, apiPut, apiDelete } from "../api";
 
 async function loadPage() {
   const slug = new URLSearchParams(window.location.search).get("slug");
@@ -15,22 +14,54 @@ async function loadGroupForEdit(slug: string) {
   try {
     const group = await apiGet(`/groups/${slug}/`);
 
-    // Preenche o formulário
     (document.getElementById("name") as HTMLInputElement).value = group.name;
     (document.getElementById("description") as HTMLTextAreaElement).value =
       group.description ?? "";
 
-    // Troca textos da página para "Editar"
     document.querySelector("h1")!.innerHTML = "✏️ Editar Grupo";
     document.querySelector("p.text-gray")!.innerHTML =
       "Atualize as informações do grupo.";
     document.querySelector("#group-form button")!.innerHTML = "Salvar Alterações";
 
+    if (group.is_creator) {
+      const form = document.getElementById("group-form")!;
+      const deleteBtn = document.createElement("button");
+
+      deleteBtn.id = "delete-group-btn";
+      deleteBtn.type = "button";
+      deleteBtn.className = "btn btn-sm btn-outline-danger mt-3";
+      deleteBtn.innerHTML = "🗑️ Deletar Grupo";
+
+      form.insertAdjacentElement("afterend", deleteBtn);
+      attachDeleteGroupButton(slug);
+    }
   } catch (err) {
     console.error(err);
     alert("Erro ao carregar grupo para edição.");
   }
 }
+
+
+function attachDeleteGroupButton(slug: string) {
+  const btn = document.getElementById("delete-group-btn");
+  if (!btn) return;
+
+  btn.addEventListener("click", async () => {
+    if (!confirm("Tem certeza que deseja deletar este grupo?")) return;
+
+    try {
+      await apiDelete(`/groups/${slug}/`);
+      alert("Grupo deletado com sucesso.");
+      window.location.href = "/src/pages/group_list.html";
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao deletar grupo.");
+    }
+  });
+}
+
+
+
 
 function setupSubmit(slug: string | null) {
   const form = document.getElementById("group-form") as HTMLFormElement;
@@ -38,7 +69,7 @@ function setupSubmit(slug: string | null) {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    alertArea.innerHTML = ""; // limpa mensagens anteriores
+    alertArea.innerHTML = "";
 
     const data = new FormData(form);
 
@@ -51,10 +82,8 @@ function setupSubmit(slug: string | null) {
       let result;
 
       if (slug) {
-        // MODO EDIÇÃO
         result = await apiPut(`/groups/${slug}/`, payload);
       } else {
-        // MODO CRIAÇÃO
         result = await apiPost("/groups/", payload);
       }
 
@@ -63,9 +92,7 @@ function setupSubmit(slug: string | null) {
     } catch (err: any) {
       console.error("Erro ao salvar grupo:", err);
 
-      // -----------------------------
-      // 🟥 ERRO 400 — validação do DRF
-      // -----------------------------
+
       if (err.message?.includes("Erro 400")) {
         try {
           const raw = err.message.replace("Erro 400:", "").trim();
@@ -82,7 +109,6 @@ function setupSubmit(slug: string | null) {
           }
 
         } catch {
-          // fallback caso algo venha diferente
           alertArea.innerHTML = `
             <div class="alert alert-danger py-2">
               Não foi possível salvar. Verifique os dados.
@@ -92,9 +118,6 @@ function setupSubmit(slug: string | null) {
         }
       }
 
-      // -----------------------------
-      // ❌ ERRO genérico
-      // -----------------------------
       alertArea.innerHTML = `
         <div class="alert alert-danger py-2">
           Erro ao salvar grupo. Tente novamente.

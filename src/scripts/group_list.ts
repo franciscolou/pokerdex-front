@@ -18,7 +18,6 @@ async function renderGroups() {
   const myGroupsCount = document.getElementById("my-groups-count")!;
   const otherGroupsCount = document.getElementById("other-groups-count")!;
 
-  // Criar dinamicamente a seção "Aguardando aprovação"
   let pendingSection = document.getElementById("pending-groups-section");
   if (!pendingSection) {
     const wrapper = document.createElement("section");
@@ -35,7 +34,6 @@ async function renderGroups() {
       <div id="pending-groups-container" class="row g-3"></div>
     `;
 
-    // inserir ENTRE "Meus Grupos" e "Outros Grupos"
     const myGroupsSection = document.querySelector(".my-groups-section")!;
     const otherGroupsSection = document.querySelector("section.mb-2")!;
     myGroupsSection.insertAdjacentElement("afterend", wrapper);
@@ -46,7 +44,6 @@ async function renderGroups() {
   const pendingGroupsContainer = document.getElementById("pending-groups-container")!;
   const pendingGroupsCount = document.getElementById("pending-groups-count")!;
 
-  // Botões do topo
   headerActions.innerHTML = `
     <a href="/src/pages/game_manage.html" class="btn btn-create-game">
       <i class="bi bi-cash-stack"></i> Nova noite
@@ -63,16 +60,10 @@ async function renderGroups() {
     const otherGroups: Group[] = data.otherGroups || [];
     const pendingGroups: Group[] = data.requestedGroups || [];
 
-    /* ============================
-       CONTADORES
-    ============================= */
     myGroupsCount.textContent = String(myGroups.length);
     otherGroupsCount.textContent = String(otherGroups.length);
     pendingGroupsCount.textContent = String(pendingGroups.length);
 
-    /* ============================
-       MEUS GRUPOS
-    ============================= */
     myGroupsContainer.innerHTML =
       myGroups.length > 0
         ? myGroups.map(renderGroupCard).join("")
@@ -86,9 +77,6 @@ async function renderGroups() {
           </div>
       `;
 
-    /* ============================
-       AGUARDANDO APROVAÇÃO
-    ============================= */
     if (pendingGroups.length > 0) {
       pendingSection!.style.display = "block";
       pendingGroupsContainer.innerHTML = pendingGroups.map(renderGroupCard).join("");
@@ -96,9 +84,6 @@ async function renderGroups() {
       pendingSection!.style.display = "none";
     }
 
-    /* ============================
-       OUTROS GRUPOS
-    ============================= */
     otherGroupsContainer.innerHTML =
       otherGroups.length > 0
         ? otherGroups.map(renderGroupCard).join("")
@@ -111,9 +96,7 @@ async function renderGroups() {
   }
 }
 
-/* ============================================================
-   CARD DE GRUPO (reutilizado em todas as seções)
-============================================================ */
+
 function renderGroupCard(g: Group): string {
   const date = g.last_post
     ? new Date(g.last_post).toLocaleString("pt-BR", {
