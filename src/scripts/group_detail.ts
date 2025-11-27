@@ -204,7 +204,19 @@ function renderMembers(group: GroupDetail) {
   container.innerHTML = `
     <div class="card bg-dark border-secondary text-light">
       <div class="card-body">
-        <h3 class="h5 mb-3">Membros (${group.memberships.length})</h3>
+        <div class="d-flex text-light justify-content-between align-items-center mb-3">
+          <h3 class="h5 mb-0">Membros (${group.memberships.length})</h3>
+
+          <button 
+            id="invite-btn" 
+            class="btn btn-glass btn-glass-blue text-light btn-sm"
+            style="display:flex; align-items:center; gap:.35rem;"
+          >
+           <i class="bi bi-link-45deg"></i> Convite
+         </button>
+        </div>
+        
+        
         <ul class="list-group list-group-flush">
           ${group.memberships
             .map((m) => {
@@ -255,6 +267,7 @@ function renderMembers(group: GroupDetail) {
   `;
 
   attachMemberActions(group.slug, group);
+  attachInviteButton(group);
 }
 
 
@@ -462,6 +475,29 @@ function attachGameClickEvents() {
       const id = item.getAttribute("data-game-id");
       if (id) location.href = `/src/pages/game_detail.html?id=${id}`;
     });
+  });
+}
+
+function attachInviteButton(group: GroupDetail) {
+  const btn = document.getElementById("invite-btn");
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    const link = `${location.origin}/src/pages/group_invite.html?slug=${group.slug}`;
+    navigator.clipboard.writeText(link);
+
+    const originalHTML = btn.innerHTML;
+
+    btn.innerHTML = `<i class="bi bi-check-lg"></i> Copiado!`;
+
+    btn.style.transform = "scale(1.05)";
+    btn.style.boxShadow = "0 0 0 .25rem rgba(0,140,255,.25)";
+
+    setTimeout(() => {
+      btn.innerHTML = originalHTML;
+      btn.style.transform = "scale(1)";
+      btn.style.boxShadow = "none";
+    }, 2200);
   });
 }
 

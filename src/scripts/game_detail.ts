@@ -77,8 +77,8 @@ function renderGameCard(game: GameDetail) {
         ${isCreator ? `
           <div>
             <a href="/src/pages/game_manage.html?id=${game.id}"
-               class="btn btn-outline-warning btn-sm">
-              <i class="bi bi-pencil-square"></i> Editar partida
+               class="btn btn-warning btn-sm">
+              <i class="bi bi-pencil-square"></i>
             </a>
           </div>
         ` : ""}

@@ -822,6 +822,28 @@ select.form-control option {
   gap: 4px;
 }
 
-.row{
-  background: transparent !important;
+.btn-glass-blue {
+  --glass-r: 0;
+  --glass-g: 140;
+  --glass-b: 255;
+  --glass-text: 240,240,255;
+
+  transition:
+    background 240ms cubic-bezier(.25,.8,.25,1),
+    box-shadow 240ms cubic-bezier(.25,.8,.25,1),
+    transform 160ms ease-out;
+}
+
+.btn-glass-blue:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(0,140,255,0.22) 0%,
+    rgba(0,140,255,0.12) 100%
+  );
+
+  box-shadow:
+    0 4px 10px rgba(0,140,255,0.18),
+    0 0 0 0.10rem rgba(0,140,255,0.25);
+
+  transform: translateY(-1px);
 }

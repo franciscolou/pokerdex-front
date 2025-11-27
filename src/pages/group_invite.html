@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Entrar no grupo...</title>
+  <link rel="stylesheet" href="../styles/globals.css" />
+</head>
+<body class="bg-dark text-light d-flex justify-content-center align-items-center vh-100">
+  <div id="msg" class="text-center"></div>
+
+  <script type="module">
+    import { apiPost } from "../api.ts";
+
+    async function handleInvite() {
+      const msgBox = document.getElementById("msg");
+      const slug = new URLSearchParams(window.location.search).get("slug");
+
+      if (!slug) {
+        msgBox.innerHTML = "<p>Convite inválido.</p>";
+        return;
+      }
+
+    try{
+      await apiPost(`/groups/${slug}/join_request/`, {});
+    } catch (err) {}
+
+      setTimeout(() => {
+        window.location.href = `/src/pages/group_detail.html?slug=${slug}`;
+      }, 500);
+    }
+
+    handleInvite();
+  </script>
+</body>
+</html>
