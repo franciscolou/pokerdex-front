@@ -37,7 +37,7 @@ export default defineConfig({
         group_manage: resolve(rootDir, "src/pages/group_manage.html"),
         password_reset: resolve(rootDir, "src/pages/password_reset.html"),
         password_reset_confirm: resolve(rootDir, "src/pages/password_reset_confirm.html"),
-        group_list: resolve(rootDir, "src/pages/group_list.html"),
+        index: resolve(rootDir, "src/pages/group_list.html"),
         group_detail: resolve(rootDir, "src/pages/group_detail.html"),
         game_manage: resolve(rootDir, "src/pages/game_manage.html"),
         game_detail: resolve(rootDir, "src/pages/game_detail.html"),
@@ -48,6 +48,7 @@ export default defineConfig({
     },
   },
 });
+
 
 
 
