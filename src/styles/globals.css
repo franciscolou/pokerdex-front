@@ -19,10 +19,18 @@
 
 *{box-sizing:border-box}
 
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
 body{
   background:var(--bg);
   color:var(--text);
   font-family: "Ubuntu", sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 .navbar-brand img,
@@ -846,4 +854,16 @@ select.form-control option {
     0 0 0 0.10rem rgba(0,140,255,0.25);
 
   transform: translateY(-1px);
+}
+
+.footer-fixed {
+  height: 80px;
+  padding: 0;
+  display: flex;
+  align-items: center; 
+  justify-content: center;
+}
+
+.footer-content {
+  font-size: 0.875rem;
 }

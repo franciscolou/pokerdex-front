@@ -1,5 +1,5 @@
 
-export const API_BASE = process.env.APP_API_BASE || "https://pokerdex-back.onrender.com/api";
+export const API_BASE = "https://pokerdex-back.onrender.com/api";
 
 export function getAuthToken(): string | null {
   return localStorage.getItem("access_token");
