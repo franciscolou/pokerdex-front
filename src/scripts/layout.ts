@@ -24,7 +24,7 @@ export async function loadLayout() {
   const userPlaceholder = document.getElementById("username-placeholder");
   if (userPlaceholder) {
     try {
-      const res = await fetch("http://localhost:8000/api/auth/me/", {
+      const res = await fetch("https://pokerdex-back.onrender.com/api/auth/me/", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
@@ -83,4 +83,5 @@ function setupHeaderSearch() {
 
     window.location.href = `/src/pages/group_list.html?search=${encoded}`;
   });
+
 }
