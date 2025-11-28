@@ -9,7 +9,7 @@ export default defineConfig({
     open: "/src/pages/group_list.html",
     proxy: {
       "/api": {
-        target: "http://localhost:8000",
+        target: "https://pokerdex-back.onrender.com",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ""),
       },
@@ -30,3 +30,4 @@ export default defineConfig({
     },
   },
 });
+
