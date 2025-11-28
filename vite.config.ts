@@ -15,6 +15,18 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+        host: '0.0.0.0', 
+        port: process.env.PORT || 4173,
+        open: "/src/pages/group_list.html",
+        proxy: {
+          "/api": {
+            target: "https://pokerdex-back.onrender.com",
+            changeOrigin: true,
+            rewrite: (path) => path.replace(/^\/api/, ""),
+          },
+        allowedHosts: ['pokerdex-6yws.onrender.com'], 
+    },
 
   build: {
     rollupOptions: {
@@ -30,4 +42,5 @@ export default defineConfig({
     },
   },
 });
+
 
