@@ -3,7 +3,7 @@ import { checkAuth } from "../api";
 export async function loadLayout() {
 
   try {
-    const res = await fetch("/src/components/header.html");
+    const res = await fetch("/header.html");
     if (!res.ok) {
       console.error("❌ Header não encontrado!");
       return;
@@ -12,6 +12,18 @@ export async function loadLayout() {
     document.body.insertAdjacentHTML("afterbegin", headerHTML);
   } catch (err) {
     return;
+  }
+
+  try {
+    const res = await fetch("/footer.html");
+    if (!res.ok) {
+      console.warn("⚠️ Footer não encontrado!");
+    } else {
+      const footerHTML = await res.text();
+      document.body.insertAdjacentHTML("beforeend", footerHTML);
+    }
+  } catch (err) {
+    console.warn("⚠️ Erro ao carregar footer", err);
   }
 
   const isLogged = await checkAuth();
